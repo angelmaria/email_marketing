@@ -73,7 +73,7 @@ class EmailSender:
                         blacklist.add(row['email'].strip().lower())
         return blacklist
 
-    def load_pending_contacts(self, csv_file='contacts.csv', campaign_col='enviado_c1'):
+    def load_pending_contacts(self, csv_file='contactos.csv', campaign_col='enviado_c1'):
         contacts = []
         blacklist = self.load_blacklist()
         

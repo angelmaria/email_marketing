@@ -8,10 +8,10 @@ SENDER_PASSWORD = 'kybb tadp bkye oife'
 
 # --- CONFIGURACIÓN DE ENVÍO ---
 CONFIG = {
-    'min_delay': 40,
-    'max_delay': 90,
-    'batch_size': 20,
-    'batch_delay': 1200
+    'min_delay': 30,
+    'max_delay': 70,
+    'batch_size': 40,
+    'batch_delay': 300
 }
 
 # --- SEGURIDAD ---

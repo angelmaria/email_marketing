@@ -22,6 +22,16 @@ class EmailSender:
         self.disable_images = os.getenv('DISABLE_IMAGES', 'false').strip().lower() in ('1', 'true', 'yes')
         Path("logs").mkdir(exist_ok=True)
 
+    def _log(self, kind: str, text: str):
+        try:
+            date = datetime.now().strftime('%Y-%m-%d')
+            log_path = Path("logs") / f"{kind}_{date}.log"
+            with open(log_path, 'a', encoding='utf-8') as f:
+                f.write(f"{datetime.now().isoformat()} | {text}\n")
+        except Exception:
+            # Evitar que un fallo de logging interrumpa envíos
+            pass
+
     def attach_inline_images(self, msg):
         """Adjunta imágenes inline (CID) si existen en la carpeta IMAGENES."""
         image_map = {
@@ -92,6 +102,7 @@ class EmailSender:
 
             reader = csv.DictReader(file, dialect=dialect)
             
+            row_counter = 0
             for row in reader:
                 # Si ya se envió la campaña a esta fila (farmacia), la saltamos entera
                 if row.get(campaign_col, '').lower() == 'si':
@@ -105,8 +116,11 @@ class EmailSender:
                 # Separamos por punto y coma y limpiamos espacios
                 email_list = [e.strip() for e in raw_emails.split(';') if e.strip()]
                 
-                # Iteramos sobre TODOS los emails encontrados en esa fila
-                for individual_email in email_list:
+                group_total = len(email_list)
+                row_key = f"row_{row_counter}"
+                
+                # Iteramos sobre TODOS los emails encontrados en esa fila (mantenemos el orden)
+                for idx, individual_email in enumerate(email_list):
                     primary_email = individual_email.lower()
                     
                     if not primary_email or '@' not in primary_email:
@@ -125,9 +139,13 @@ class EmailSender:
                         'email': primary_email,
                         'nombre': nombre,
                         'empresa': "tu farmacia", 
-                        'row_data': row # Referencia a la fila original
+                        'row_data': row, # Referencia a la fila original
+                        'row_key': row_key,
+                        'group_index': idx,
+                        'group_total': group_total
                     }
                     contacts.append(contact_clean)
+                row_counter += 1
                 
             file.close()
 
@@ -136,7 +154,7 @@ class EmailSender:
             
         return contacts
 
-    def mark_as_sent(self, target_email, campaign_col, csv_file='contacts.csv'):
+    def mark_as_sent(self, target_email, campaign_col, csv_file='contactos.csv'):
         rows = []
         fieldnames = []
         encoding_used = 'utf-8'
@@ -167,10 +185,6 @@ class EmailSender:
         for row in rows:
             # Buscamos la fila que contenga este email (aunque haya otros en la misma celda)
             if target_email in row.get('Email', '').lower():
-                # Marcamos la fila como enviada.
-                # NOTA: Al marcar la fila, si el script se para bruscamente, 
-                # los otros emails de esta misma fila no se enviarán en la próxima ejecución.
-                # Es un compromiso aceptable para mantener la simplicidad del CSV.
                 row[campaign_col] = 'si'
                 row[f"fecha_{campaign_col}"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 updated = True
@@ -222,12 +236,13 @@ class EmailSender:
                         server.sendmail(self.sender_email, contact['email'], root.as_string())
                     
                     print(f"✅ Enviado: {contact['email']} ({contact['nombre']})")
-                    self.mark_as_sent(contact['email'], campaign_col)
+                    self._log('sent', f"{contact['email']} | {contact['nombre']}")
                     return True
                 
                 except (smtplib.SMTPServerDisconnected, smtplib.SMTPException, ConnectionError) as e:
                     if attempt < max_retries:
                         print(f"⚠️ Desconexión detectada en {contact['email']}. Reintentando ({attempt + 1}/{max_retries})...")
+                        self._log('retry', f"{contact['email']} | intento {attempt + 1}/{max_retries} | {e}")
                         time.sleep(5)  # Esperar 5s antes de reintentar
                     else:
                         raise e
@@ -236,6 +251,7 @@ class EmailSender:
 
         except Exception as e:
             print(f"❌ Error enviando a {contact['email']}: {e}")
+            self._log('error', f"{contact['email']} | {e}")
             return False
 
     def launch_campaign(self, subject, html_file_path, config, campaign_col, daily_limit=450):
@@ -253,6 +269,8 @@ class EmailSender:
         
         emails_sent_today = 0
 
+        group_success = {}
+
         for i, contact in enumerate(contacts, 1):
             # --- PROTECCIÓN DIARIA ---
             if emails_sent_today >= daily_limit:
@@ -267,6 +285,16 @@ class EmailSender:
             
             if success:
                 emails_sent_today += 1
+                group_success[contact['row_key']] = True
+            else:
+                group_success.setdefault(contact['row_key'], False)
+
+            # Si es el último correo del grupo (misma fila), marcamos como enviado la fila
+            if contact.get('group_index') is not None and contact.get('group_total') is not None:
+                if contact['group_index'] == contact['group_total'] - 1:
+                    if group_success.get(contact['row_key'], False):
+                        # Marcamos la fila como enviada (usar cualquier email del grupo)
+                        self.mark_as_sent(contact['email'], campaign_col)
 
             # Lógica de espera
             if i < total and emails_sent_today < daily_limit:

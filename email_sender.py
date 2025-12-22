@@ -7,6 +7,8 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.image import MIMEImage
+import re
+import html as html_lib
 from pathlib import Path
 
 class EmailSender:
@@ -16,15 +18,17 @@ class EmailSender:
         self.sender_email = sender_email
         self.sender_password = sender_password
         self.assets_dir = Path(__file__).resolve().parent / "IMAGENES"
+        # Permite desactivar imágenes inline para minimizar señales de spam
+        self.disable_images = os.getenv('DISABLE_IMAGES', 'false').strip().lower() in ('1', 'true', 'yes')
         Path("logs").mkdir(exist_ok=True)
 
     def attach_inline_images(self, msg):
         """Adjunta imágenes inline (CID) si existen en la carpeta IMAGENES."""
         image_map = {
-            "kpi_img": "KPI.png",
-            "asistente_img": "asistente_gestion.png",
-            "consejo_img": "consejo_farmaceutico.png",
-            "digital_img": "digital.png",
+            "kpi_img": "KPI.jpg",
+            "asistente_img": "asistente_gestion.jpg",
+            "consejo_img": "consejo_farmaceutico.jpg",
+            "digital_img": "digital.jpg",
         }
 
         for cid, filename in image_map.items():
@@ -39,6 +43,25 @@ class EmailSender:
                     msg.attach(img)
             except Exception as e:
                 print(f"⚠️ No se pudo adjuntar {filename}: {e}")
+
+    def _strip_cid_images(self, html_content: str) -> str:
+        """Elimina etiquetas <img> que referencian src="cid:*" para modo sin imágenes."""
+        return re.sub(r'<img[^>]+src="cid:[^"]+"[^>]*>', '', html_content, flags=re.IGNORECASE)
+
+    def _html_to_text(self, html_content: str) -> str:
+        """Convierte HTML a texto plano básico para la parte 'plain'."""
+        # Quitar scripts/estilos
+        no_scripts = re.sub(r'<(script|style)[\s\S]*?>[\s\S]*?</\1>', '', html_content, flags=re.IGNORECASE)
+        # Reemplazos sencillos de saltos de línea para bloques típicos
+        block_breaks = re.sub(r'</(p|div|tr|li|h[1-6])\s*>', '\n', no_scripts, flags=re.IGNORECASE)
+        # Quitar el resto de etiquetas
+        text_only = re.sub(r'<[^>]+>', '', block_breaks)
+        # Desescapar entidades HTML
+        text_only = html_lib.unescape(text_only)
+        # Normalizar espacios y líneas
+        lines = [line.strip() for line in text_only.splitlines()]
+        compact = '\n'.join([l for l in lines if l])
+        return compact
 
     def load_blacklist(self, blacklist_file='blacklist.csv'):
         blacklist = set()
@@ -161,16 +184,34 @@ class EmailSender:
 
     def send_single_email(self, contact, subject, html_content, campaign_col, max_retries=2):
         try:
-            msg = MIMEMultipart('alternative')
-            msg['From'] = f"Ángel Martínez <{self.sender_email}>"
-            msg['To'] = contact['email']
-            msg['Subject'] = subject
+            # Estructura recomendada: multipart/related -> multipart/alternative (plain + html) + imágenes
+            root = MIMEMultipart('related')
+            alt = MIMEMultipart('alternative')
+            root['From'] = f"Ángel Martínez <{self.sender_email}>"
+            root['To'] = contact['email']
+            root['Subject'] = subject
+            # List-Unsubscribe para mejorar entregabilidad
+            root['List-Unsubscribe'] = '<mailto:angel.martinez.nq@gmail.com?subject=BAJA>'
 
             body = html_content.replace('{nombre}', contact['nombre'])
             body = body.replace('{empresa}', contact['empresa'])
-            
-            msg.attach(MIMEText(body, 'html'))
-            self.attach_inline_images(msg)
+
+            if self.disable_images:
+                body_to_send = self._strip_cid_images(body)
+            else:
+                body_to_send = body
+
+            # Partes plain y html
+            plain_part = MIMEText(self._html_to_text(body_to_send), 'plain', 'utf-8')
+            html_part = MIMEText(body_to_send, 'html', 'utf-8')
+
+            alt.attach(plain_part)
+            alt.attach(html_part)
+            root.attach(alt)
+
+            # Adjuntar imágenes solo si no está desactivado
+            if not self.disable_images:
+                self.attach_inline_images(root)
 
             # --- RETRY LOGIC ---
             for attempt in range(max_retries + 1):
@@ -178,7 +219,7 @@ class EmailSender:
                     with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
                         server.starttls()
                         server.login(self.sender_email, self.sender_password)
-                        server.sendmail(self.sender_email, contact['email'], msg.as_string())
+                        server.sendmail(self.sender_email, contact['email'], root.as_string())
                     
                     print(f"✅ Enviado: {contact['email']} ({contact['nombre']})")
                     self.mark_as_sent(contact['email'], campaign_col)

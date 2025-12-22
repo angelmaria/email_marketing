@@ -18,6 +18,12 @@
         
         /* Fallback para URLs externas (GitHub) */
         .feature-img-remote { float: right; width: 180px; height: 160px; object-fit: cover; margin-left: 20px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; background-color: #ffffff; }
+
+        /* Distribución por tabla para el bloque largo (Asistente) */
+        .feature-table { width: 100%; border-spacing: 0; }
+        .feature-text-col { vertical-align: top; }
+        .feature-img-col { width: 190px; vertical-align: top; text-align: right; }
+        .feature-img-col img { float: none !important; margin: 0 0 0 auto; }
         
         /* Textos */
         .header-text { color: #008C9E; font-size: 26px; font-weight: bold; padding: 35px 35px 10px 35px; text-align: left; }
@@ -81,6 +87,9 @@
             .magazine-img { float: none !important; width: 100% !important; margin: 0 0 15px 0 !important; }
             .feature-img { float: none !important; width: 100% !important; height: auto !important; margin: 0 0 15px 0 !important; }
             .feature-img-remote { float: none !important; width: 100% !important; height: auto !important; margin: 0 0 15px 0 !important; }
+            .feature-table, .feature-table tr, .feature-table td { display: block; width: 100% !important; }
+            .feature-img-col { text-align: center !important; width: 100% !important; }
+            .feature-img-col img { margin: 0 auto 15px auto !important; max-width: 240px; }
             .main-container { width: 100% !important; border-radius: 0 !important; }
             .btn-table-cta { width: 100% !important; } /* Botón ancho total en móvil */
             .cta-text-cell { font-size: 16px !important; }
@@ -110,7 +119,7 @@
                 <td>
                     <div class="product-box">
                         <div class="magazine-wrapper">
-                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/KPI.jpg" alt="Panel de KPIs" class="feature-img-remote">
+                            <img src="cid:kpi_img" alt="Panel de KPIs" class="feature-img-remote">
                             <table class="title-table">
                                 <tr>
                                     <td class="icon-cell">📊</td>
@@ -128,32 +137,40 @@
             <tr>
                 <td>
                     <div class="product-box">
-                        <div class="magazine-wrapper">
-                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/asistente_gestion.jpg" alt="Asistente de Gestión" class="feature-img-remote">
-                            <table class="title-table">
-                                <tr>
-                                    <td class="icon-cell">🤖</td>
-                                    <td class="text-cell">2. Asistente de Gestión Inteligente</td>
-                                </tr>
-                            </table>
+                        <table class="feature-table" role="presentation">
+                            <tr>
+                                <td class="feature-text-col">
+                                    <div class="magazine-wrapper">
+                                        <table class="title-table">
+                                            <tr>
+                                                <td class="icon-cell">🤖</td>
+                                                <td class="text-cell">2. Asistente de Gestión Inteligente</td>
+                                            </tr>
+                                        </table>
 
-                            <span class="desc-text">Tres automatizaciones que ahorran horas:</span>
+                                        <span class="desc-text">Tres automatizaciones que ahorran horas:</span>
 
-                            <table class="sublist-table">
-                                <tr>
-                                    <td class="sub-icon">📦</td>
-                                    <td class="sub-text"><strong>Pedidos Directos:</strong> Alertas automáticas al llegar al mínimo para pedir directo y mejorar margen. Permite la generación de propuestas de pedido configurables (importe mínimo y periodo de cobertura).</td>
-                                </tr>
-                                <tr>
-                                    <td class="sub-icon">🧾</td>
-                                    <td class="sub-text"><strong>Cuadre de Albaranes:</strong> Verifica abonos y detecta cargos erróneos automáticamente.</td>
-                                </tr>
-                                <tr>
-                                    <td class="sub-icon">📝</td>
-                                    <td class="sub-text"><strong>Listas Inteligentes:</strong> Gestión rápida de listas de productos.</td>
-                                </tr>
-                            </table>
-                        </div>
+                                        <table class="sublist-table">
+                                            <tr>
+                                                <td class="sub-icon">📦</td>
+                                                <td class="sub-text"><strong>Pedidos Directos:</strong> Alertas automáticas al llegar al mínimo para pedir directo y mejorar margen. Permite la generación de propuestas de pedido configurables (importe mínimo y periodo de cobertura).</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="sub-icon">🧾</td>
+                                                <td class="sub-text"><strong>Cuadre de Albaranes:</strong> Verifica abonos y detecta cargos erróneos automáticamente.</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="sub-icon">📝</td>
+                                                <td class="sub-text"><strong>Listas Inteligentes:</strong> Gestión rápida de listas de productos.</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td class="feature-img-col">
+                                    <img src="cid:asistente_img" alt="Asistente de Gestión" class="feature-img-remote">
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </td>
             </tr>
@@ -162,7 +179,7 @@
                 <td>
                     <div class="product-box">
                         <div class="magazine-wrapper">
-                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/consejo_farmaceutico.jpg" alt="Consejo Farmacéutico" class="feature-img-remote">
+                            <img src="cid:consejo_img" alt="Consejo Farmacéutico" class="feature-img-remote">
                             <table class="title-table">
                                 <tr>
                                     <td class="icon-cell" style="color:#009933; font-weight:bold; font-size:1.3em;">✚</td>
@@ -181,7 +198,7 @@
                 <td>
                     <div class="product-box">
                         <div class="magazine-wrapper">
-                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/digital.jpg" alt="Posicionamiento Digital" class="feature-img-remote">
+                            <img src="cid:digital_img" alt="Posicionamiento Digital" class="feature-img-remote">
                             <table class="title-table">
                                 <tr>
                                     <td class="icon-cell">🌐</td>

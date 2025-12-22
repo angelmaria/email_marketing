@@ -1,0 +1,40 @@
+from email_sender import EmailSender
+
+# --- TUS CREDENCIALES ---
+SMTP_SERVER = 'smtp.gmail.com'
+SMTP_PORT = 587
+SENDER_EMAIL = 'angel.martinez.nq@gmail.com'
+SENDER_PASSWORD = 'kybb tadp bkye oife' 
+
+# --- CONFIGURACIÓN DE ENVÍO ---
+CONFIG = {
+    'min_delay': 40,
+    'max_delay': 90,
+    'batch_size': 20,
+    'batch_delay': 1200
+}
+
+# --- SEGURIDAD ---
+# Gmail permite 500/día. Ponemos 450 para dejar margen a tus emails normales.
+MAX_DAILY_LIMIT = 450 
+
+# --- DEFINICIÓN DE LA CAMPAÑA ACTUAL ---
+CAMPAIGN_ID = "c1" 
+SUBJECT = "⚕️ 4 Herramientas para optimizar tu farmacia"
+HTML_TEMPLATE = "templates/email_camp_1.html"
+
+if __name__ == "__main__":
+    sender = EmailSender(SMTP_SERVER, SMTP_PORT, SENDER_EMAIL, SENDER_PASSWORD)
+    
+    col_name = f"enviado_{CAMPAIGN_ID}"
+    
+    print(f"🚀 Iniciando campaña: {CAMPAIGN_ID}")
+    print(f"📂 Plantilla: {HTML_TEMPLATE}")
+    
+    sender.launch_campaign(
+        SUBJECT, 
+        HTML_TEMPLATE, 
+        CONFIG, 
+        campaign_col=col_name,
+        daily_limit=MAX_DAILY_LIMIT  # <--- Pasamos el límite aquí
+    )

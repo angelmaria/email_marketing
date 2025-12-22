@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soluciones Farmacia</title>
+    <style>
+        /* Reset y Estructura */
+        body { margin: 0; padding: 0; background-color: #f2f4f6; font-family: 'Verdana', 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+        table { border-spacing: 0; border-collapse: collapse; }
+        
+        /* Contenedor Principal (700px) */
+        .main-container { width: 100%; max-width: 800px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        
+        /* Imágenes */
+        img { max-width: 100%; height: auto; display: block; }
+        .feature-img { float: right; width: 180px; height: 160px; object-fit: cover; margin-left: 20px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; background-color: #ffffff; }
+        
+        /* Fallback para URLs externas (GitHub) */
+        .feature-img-remote { float: right; width: 180px; height: 160px; object-fit: cover; margin-left: 20px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; background-color: #ffffff; }
+        
+        /* Textos */
+        .header-text { color: #008C9E; font-size: 26px; font-weight: bold; padding: 35px 35px 10px 35px; text-align: left; }
+        .intro-text { color: #4b5563; font-size: 16px; line-height: 1.6; padding: 0 35px 20px 35px; }
+        
+        /* Link baja superior */
+        .top-unsubscribe { text-align: center; padding: 15px; background-color: #f2f4f6; color: #6b7280; font-size: 14px; }
+        .top-unsubscribe a { color: #4b5563; text-decoration: underline; font-weight: bold; }
+
+        /* Cajas de productos */
+        .product-box { background-color: #fbfcf8; border-left: 5px solid #0a7685; padding: 25px; margin: 0 35px 25px 35px; border-radius: 0 8px 8px 0; }
+
+        .product-last { background-color: #003238; border-left: 5px solid #008C9E; padding: 25px; margin: 0 35px 25px 35px; border-radius: 0 8px 8px 0; }
+        
+        /* Alineación Títulos */
+        .title-table td { vertical-align: middle; }
+        .icon-cell { width: 35px; font-size: 22px; padding-right: 10px; padding-top: 0px; text-align: center; }
+        .text-cell { color: #008C9E; font-size: 20px; font-weight: bold; }
+        .desc-text { font-size: 16px; color: #374151; line-height: 1.6; margin-top: 10px; display: block; }
+        
+        /* Sub-listas */
+        .sublist-table { margin-top: 15px; width: 100%; }
+        .sublist-table td { padding-bottom: 12px; vertical-align: top; }
+        .sub-icon { width: 30px; font-size: 20px; text-align: center; } /* Aumentado tamaño */
+        .sub-text { font-size: 16px; color: #4b5563; line-height: 1.5; padding-left: 10px; }
+        .sub-text strong { color: #008C9E; }
+
+        /* Estilo Revista (Imagen flotante) - Adaptado para la imagen Healthfinder */
+        .magazine-wrapper { overflow: hidden; }
+        .magazine-img { float: right; width: 180px; margin-left: 20px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #e2e8f0; background-color: white; }
+
+        /* Video Container */
+        .video-border { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; max-width: 500px; margin: 0 auto; }
+        
+        /* BOTONES ALINEADOS CON TABLAS (Truco infalible) */
+        .btn-table-video { background-color: #dc2626; width: 100%; }
+        .btn-table-cta { background-color: #16a34a; border-radius: 6px; box-shadow: 0 4px 0 #15803d; margin: 0 auto; }
+        .btn-cell-icon { padding: 12px 5px 12px 15px; font-size: 20px; line-height: 1; text-align: right; width: 30px;}
+        .btn-cell-text { padding: 12px 15px 12px 5px; color: white; font-weight: bold; font-size: 16px; text-transform: uppercase; text-align: left; }
+
+        /* CTA Principal Celdas */
+        .cta-icon-cell { padding: 18px 10px 18px 25px; font-size: 26px; line-height: 1; }
+        .cta-text-cell { padding: 18px 25px 18px 5px; color: white; font-weight: bold; font-size: 19px; line-height: 1; }
+
+        /* CTA Wrapper */
+        .cta-wrapper { text-align: center; padding: 35px 20px; background-color: #eff6ff; margin: 20px 35px; border-radius: 8px; border: 1px dashed #bfdbfe; }
+        
+        /* Alerta */
+        .alert-table { margin: 15px auto 0 auto; }
+        .alert-table td { vertical-align: middle; }
+        .alert-text { color: #dc2626; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 8px; }
+
+        /* Footer */
+        .footer { background-color: #1e293b; color: #94a3b8; padding: 35px; font-size: 13px; text-align: center; line-height: 1.5; }
+        .footer a { color: #cbd5e1; text-decoration: underline; }
+        
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .header-text { font-size: 22px !important; padding: 25px 20px 10px 20px !important; }
+            .intro-text, .product-box { padding: 0 20px 20px 20px !important; margin-left: 10px !important; margin-right: 10px !important; }
+            .magazine-img { float: none !important; width: 100% !important; margin: 0 0 15px 0 !important; }
+            .feature-img { float: none !important; width: 100% !important; height: auto !important; margin: 0 0 15px 0 !important; }
+            .feature-img-remote { float: none !important; width: 100% !important; height: auto !important; margin: 0 0 15px 0 !important; }
+            .main-container { width: 100% !important; border-radius: 0 !important; }
+            .btn-table-cta { width: 100% !important; } /* Botón ancho total en móvil */
+            .cta-text-cell { font-size: 16px !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-unsubscribe">
+        Si no deseas recibir esta información, puedes <a href="mailto:angel.martinez.nq@gmail.com?subject=BAJA&body=Baja">darte de baja</a>.
+    </div>
+
+    <center>
+        <div class="notranslate">
+        <table class="main-container">
+            <tr>
+                <td>
+                    <div class="header-text">Hola, {nombre}</div>
+                    <div class="intro-text">
+                        Sé que en la farmacia el día a día absorbe todo el tiempo. A menudo, gestionar la rentabilidad queda para "cuando tenga un hueco", y ese hueco nunca llega. <br><br>
+                        Por eso hemos creado una suite de 4 herramientas que trabajan solas para ti:
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div class="product-box">
+                        <div class="magazine-wrapper">
+                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/KPI.jpg" alt="Panel de KPIs" class="feature-img-remote">
+                            <table class="title-table">
+                                <tr>
+                                    <td class="icon-cell">📊</td>
+                                    <td class="text-cell">1. Panel de KPIs Instantáneos</td>
+                                </tr>
+                            </table>
+                            <span class="desc-text">
+                                Visualiza ventas, margen real, stock y productividad en tiempo real. Sin sacar informes complejos del ERP. Toma decisiones basadas en datos al instante.
+                            </span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div class="product-box">
+                        <div class="magazine-wrapper">
+                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/asistente_gestion.jpg" alt="Asistente de Gestión" class="feature-img-remote">
+                            <table class="title-table">
+                                <tr>
+                                    <td class="icon-cell">🤖</td>
+                                    <td class="text-cell">2. Asistente de Gestión Inteligente</td>
+                                </tr>
+                            </table>
+
+                            <span class="desc-text">Tres automatizaciones que ahorran horas:</span>
+
+                            <table class="sublist-table">
+                                <tr>
+                                    <td class="sub-icon">📦</td>
+                                    <td class="sub-text"><strong>Pedidos Directos:</strong> Alertas automáticas al llegar al mínimo para pedir directo y mejorar margen. Permite la generación de propuestas de pedido configurables (importe mínimo y periodo de cobertura).</td>
+                                </tr>
+                                <tr>
+                                    <td class="sub-icon">🧾</td>
+                                    <td class="sub-text"><strong>Cuadre de Albaranes:</strong> Verifica abonos y detecta cargos erróneos automáticamente.</td>
+                                </tr>
+                                <tr>
+                                    <td class="sub-icon">📝</td>
+                                    <td class="sub-text"><strong>Listas Inteligentes:</strong> Gestión rápida de listas de productos.</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div class="product-box">
+                        <div class="magazine-wrapper">
+                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/consejo_farmaceutico.jpg" alt="Consejo Farmacéutico" class="feature-img-remote">
+                            <table class="title-table">
+                                <tr>
+                                    <td class="icon-cell" style="color:#009933; font-weight:bold; font-size:1.3em;">✚</td>
+                                    <td class="text-cell">3. Consejo Farmacéutico Potenciado</td>
+                                </tr>
+                            </table>
+                            <div class="desc-text">
+                                El sistema, al escanear un producto, ofrece consejo farmacéutico para <strong>efectos adversos</strong> o <strong>síntomas menores</strong>, y sugiere productos complementarios. Esta función busca mejorar la atención al paciente e impulsar el aumento del ticket medio
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div class="product-box">
+                        <div class="magazine-wrapper">
+                            <img src="https://raw.githubusercontent.com/angelmaria/venta_inducida/main/EMAIL/IMAGENES/digital.jpg" alt="Posicionamiento Digital" class="feature-img-remote">
+                            <table class="title-table">
+                                <tr>
+                                    <td class="icon-cell">🌐</td>
+                                    <td class="text-cell">4. Posicionamiento Digital</td>
+                                </tr>
+                            </table>
+                            <div class="desc-text">
+                                Optimización automática de tu ficha de Google Business. Atrae más pacientes del barrio aumentando tu visibilidad local.
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div class="product-box product-last">
+                        <table class="title-table">
+                            <tr>
+                                <td class="text-cell" style="color:rgb(186, 228, 232);"><span style="margin-right:10px;">🔜</span>Extra: Próximas Novedades</td>
+                            </tr>
+                        </table>
+                        <div class="desc-text">
+                            <table class="sublist-table">
+                            <tr>
+                            <td class="sub-icon">🛒</td>
+                            <td class="sub-text" style="color:rgb(233, 247, 250);">
+                            Concentración de Compras: Informe de dispersión en grupos homogéneos. Calcula el ahorro potencial al unificar las compras en las moléculas con mejor margen.</td>
+                            </tr>
+                            <tr>
+                                <td class="sub-icon">💊</td>
+                                <td class="sub-text" style="color:rgb(233, 247, 250);">
+                                Optimización EFP/OTC: Análisis de productos publicitarios intercambiables para el mismo síntoma menor. Elige siempre la opción más rentable sin perder calidad asistencial.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="sub-icon">🧠</td>
+                                <td class="sub-text" style="color:rgb(233, 247, 250);">
+                                Chatbot de Insights: IA conectada a tus datos. Haz preguntas en lenguaje natural sobre tu farmacia y obtén respuestas estratégicas al instante.
+                                </td>
+                            </tr>
+                            </table>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <div class="cta-wrapper">
+                        <div style="font-size: 19px; color: #00707f; margin-bottom: 20px; font-weight: bold;">
+                            ¿Lo probamos en tu farmacia?
+                        </div>
+                        
+                        <a href="mailto:angel.martinez.nq@gmail.com?subject=PRUEBA%201%20MES%20GRATIS%20-%20{empresa}&body=Hola%20%C3%81ngel,%0D%0A%0D%0AQuiero%20solicitar%20una%20demo%20gratuita%20y%20sin%20compromiso%20para%20probar%20la%20herramienta%20en%20{empresa}.%0D%0A%0D%0AIndico%20a%20continuaci%C3%B3n%20el%20d%C3%ADa%20y%20la%20franja%20horaria%20en%20la%20que%20pod%C3%A9is%20llamarme%20para%20realizar%20la%20demostraci%C3%B3n:%0D%0A%0D%0AD%C3%ADa:%0D%0A%0D%0AFranja%20horaria:%0D%0A%0D%0AQuedo%20a%20la%20espera%20de%20vuestra%20confirmaci%C3%B3n.%0D%0A%0D%0AMuchas%20gracias%20y%20un%20saludo." style="text-decoration:none;">
+                            <table class="btn-table-cta">
+                                <tr>
+                                    <td class="cta-icon-cell">🎁</td>
+                                        <td class="cta-text-cell">PRUEBA 1 MES GRATIS</td>
+                                </tr>
+                            </table>
+                        </a>
+                        
+                        <div style="font-size: 12px; color: #64748b; margin-top: 12px; font-style: italic;">
+                              Indica día y franja horaria para la demo
+                        </div>
+
+                        <table class="alert-table">
+                            <tr>
+                                <td>⚠️</td>
+                                <td class="alert-text">Reservado a las primeras <span style="font-size:1.3em">100</span> farmacias</td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="footer">
+                    <strong>Ángel Martínez</strong><br>
+                    Consultor de Soluciones para Farmacias<br>
+                    +34 684 302 668<br>
+                    <a href="mailto:angel.martinez.nq@gmail.com" style="color:#94a3b8">angel.martinez.nq@gmail.com</a>
+                    <br><br>
+                    <a href="https://www.healthfinder.es" target="_blank" style="color:#94a3b8; font-weight:bold; text-decoration:none;">
+                        <strong style="color:#cbd5e1;">Healthfinder</strong>
+                    </a>
+                    <br><br>
+                    <span style="opacity: 0.7;">
+                        Si no deseas recibir más información, puedes <a href="mailto:angel.martinez.nq@gmail.com?subject=BAJA&body=Baja" style="color: #94a3b8; font-weight:bold;">darte de baja</a>.
+                    </span>
+                    <div style="display:none; color:transparent;">{random_hash}</div>
+                </td>
+            </tr>
+        </table>
+        </div>
+    </center>
+</body>
+</html>

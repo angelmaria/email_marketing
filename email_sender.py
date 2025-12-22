@@ -20,17 +20,78 @@ class EmailSender:
         self.assets_dir = Path(__file__).resolve().parent / "IMAGENES"
         # Permite desactivar imágenes inline para minimizar señales de spam
         self.disable_images = os.getenv('DISABLE_IMAGES', 'false').strip().lower() in ('1', 'true', 'yes')
-        Path("logs").mkdir(exist_ok=True)
+        self.logs_dir = Path("logs")
+        self.logs_dir.mkdir(exist_ok=True)
+        self.history_file = self.logs_dir / "sent_history.csv"
+        
+        # Inicializar archivo de historial si no existe
+        if not self.history_file.exists():
+            with open(self.history_file, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["campaign_id", "email", "timestamp", "status"])
 
     def _log(self, kind: str, text: str):
         try:
             date = datetime.now().strftime('%Y-%m-%d')
-            log_path = Path("logs") / f"{kind}_{date}.log"
+            log_path = self.logs_dir / f"{kind}_{date}.log"
             with open(log_path, 'a', encoding='utf-8') as f:
                 f.write(f"{datetime.now().isoformat()} | {text}\n")
         except Exception:
-            # Evitar que un fallo de logging interrumpa envíos
             pass
+
+    def _read_csv_robust(self, filepath):
+        """Lee un CSV intentando varias codificaciones."""
+        if not os.path.exists(filepath):
+            return []
+        
+        encodings = ['utf-8', 'latin-1', 'cp1252']
+        
+        for enc in encodings:
+            try:
+                with open(filepath, 'r', encoding=enc) as f:
+                    # Leemos una muestra para detectar el dialecto
+                    sample = f.read(2048)
+                    f.seek(0)
+                    dialect = csv.Sniffer().sniff(sample)
+                    
+                    reader = csv.DictReader(f, dialect=dialect)
+                    return list(reader)
+            except (UnicodeDecodeError, csv.Error):
+                continue
+                
+        print(f"❌ Error: No se pudo leer {filepath} con codificaciones estándar.")
+        return []
+
+    def load_history(self, campaign_id):
+        """Carga el historial de envíos exitosos para esta campaña."""
+        sent_emails = set()
+        if not self.history_file.exists():
+            return sent_emails
+            
+        try:
+            with open(self.history_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get('campaign_id') == campaign_id and row.get('status') == 'sent':
+                        sent_emails.add(row.get('email', '').strip().lower())
+        except Exception as e:
+            print(f"⚠️ Error leyendo historial: {e}")
+            
+        return sent_emails
+
+    def mark_as_sent(self, campaign_id, email):
+        """Registra un envío exitoso en el historial (append-only, super rápido)."""
+        try:
+            with open(self.history_file, 'a', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    campaign_id, 
+                    email, 
+                    datetime.now().isoformat(), 
+                    'sent'
+                ])
+        except Exception as e:
+            print(f"⚠️ Error guardando historial para {email}: {e}")
 
     def attach_inline_images(self, msg):
         """Adjunta imágenes inline (CID) si existen en la carpeta IMAGENES."""
@@ -55,156 +116,81 @@ class EmailSender:
                 print(f"⚠️ No se pudo adjuntar {filename}: {e}")
 
     def _strip_cid_images(self, html_content: str) -> str:
-        """Elimina etiquetas <img> que referencian src="cid:*" para modo sin imágenes."""
         return re.sub(r'<img[^>]+src="cid:[^"]+"[^>]*>', '', html_content, flags=re.IGNORECASE)
 
     def _html_to_text(self, html_content: str) -> str:
-        """Convierte HTML a texto plano básico para la parte 'plain'."""
-        # Quitar scripts/estilos
         no_scripts = re.sub(r'<(script|style)[\s\S]*?>[\s\S]*?</\1>', '', html_content, flags=re.IGNORECASE)
-        # Reemplazos sencillos de saltos de línea para bloques típicos
         block_breaks = re.sub(r'</(p|div|tr|li|h[1-6])\s*>', '\n', no_scripts, flags=re.IGNORECASE)
-        # Quitar el resto de etiquetas
         text_only = re.sub(r'<[^>]+>', '', block_breaks)
-        # Desescapar entidades HTML
         text_only = html_lib.unescape(text_only)
-        # Normalizar espacios y líneas
         lines = [line.strip() for line in text_only.splitlines()]
         compact = '\n'.join([l for l in lines if l])
         return compact
 
     def load_blacklist(self, blacklist_file='blacklist.csv'):
         blacklist = set()
-        if os.path.exists(blacklist_file):
-            with open(blacklist_file, 'r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    if row.get('email'):
-                        blacklist.add(row['email'].strip().lower())
+        rows = self._read_csv_robust(blacklist_file)
+        for row in rows:
+            if row.get('email'):
+                blacklist.add(row['email'].strip().lower())
         return blacklist
 
-    def load_pending_contacts(self, csv_file='contactos.csv', campaign_col='enviado_c1'):
+    def load_pending_contacts(self, campaign_id, csv_file='contactos.csv'):
         contacts = []
         blacklist = self.load_blacklist()
+        sent_history = self.load_history(campaign_id)
         
-        try:
-            # Detección de encoding (utf-8 vs latin-1)
-            try:
-                file = open(csv_file, 'r', encoding='utf-8')
-                sample = file.read(1024)
-                file.seek(0)
-                dialect = csv.Sniffer().sniff(sample)
-            except UnicodeDecodeError:
-                file = open(csv_file, 'r', encoding='latin-1')
-                sample = file.read(1024)
-                file.seek(0)
-                dialect = csv.Sniffer().sniff(sample)
+        raw_rows = self._read_csv_robust(csv_file)
+        
+        if not raw_rows:
+            print(f"Error: No se encontraron contactos o el archivo {csv_file} está vacío/dañado.")
+            return []
 
-            reader = csv.DictReader(file, dialect=dialect)
+        print(f"Total filas en CSV: {len(raw_rows)}")
+        print(f"Emails ya enviados en esta campaña: {len(sent_history)}")
+
+        for row_idx, row in enumerate(raw_rows):
+            raw_emails = row.get('Email', '')
+            if not raw_emails:
+                continue
             
-            row_counter = 0
-            for row in reader:
-                # Si ya se envió la campaña a esta fila (farmacia), la saltamos entera
-                if row.get(campaign_col, '').lower() == 'si':
-                    continue
-
-                raw_emails = row.get('Email', '')
-                if not raw_emails:
-                    continue
-                
-                # --- CAMBIO IMPORTANTE: LOGICA MULTI-EMAIL ---
-                # Separamos por punto y coma y limpiamos espacios
-                email_list = [e.strip() for e in raw_emails.split(';') if e.strip()]
-                
-                group_total = len(email_list)
-                row_key = f"row_{row_counter}"
-                
-                # Iteramos sobre TODOS los emails encontrados en esa fila (mantenemos el orden)
-                for idx, individual_email in enumerate(email_list):
-                    primary_email = individual_email.lower()
-                    
-                    if not primary_email or '@' not in primary_email:
-                        continue
-
-                    # Verificar blacklist para este email concreto
-                    if primary_email in blacklist:
-                        print(f"🚫 Ignorando (Blacklist): {primary_email}")
-                        continue
-                    
-                    # Normalizar nombre
-                    nombre = row.get('Nombre', 'Farmacéutico').strip().title()
-                    
-                    # Añadimos este email específico a la lista de envíos
-                    contact_clean = {
-                        'email': primary_email,
-                        'nombre': nombre,
-                        'empresa': "tu farmacia", 
-                        'row_data': row, # Referencia a la fila original
-                        'row_key': row_key,
-                        'group_index': idx,
-                        'group_total': group_total
-                    }
-                    contacts.append(contact_clean)
-                row_counter += 1
-                
-            file.close()
-
-        except FileNotFoundError:
-            print(f"Error: No se encuentra el archivo {csv_file}")
+            # Separamos por punto y coma
+            email_list = [e.strip() for e in raw_emails.split(';') if e.strip()]
             
+            for email in email_list:
+                clean_email = email.lower()
+                
+                # Validaciones
+                if '@' not in clean_email:
+                    continue
+                if clean_email in blacklist:
+                    # Solo verbose si quieres depurar
+                    # print(f"🚫 Ignorando (Blacklist): {clean_email}") 
+                    continue
+                if clean_email in sent_history:
+                    # Ya enviado
+                    continue
+                
+                # Preparar objeto de contacto
+                nombre = row.get('Nombre', 'Farmacéutico').strip().title()
+                contact = {
+                    'email': clean_email,
+                    'nombre': nombre,
+                    'empresa': "tu farmacia", 
+                    'original_row': row
+                }
+                contacts.append(contact)
+                
         return contacts
 
-    def mark_as_sent(self, target_email, campaign_col, csv_file='contactos.csv'):
-        rows = []
-        fieldnames = []
-        encoding_used = 'utf-8'
-
+    def send_single_email(self, server, contact, subject, html_content, max_retries=1):
+        """Envía un email usando una conexión SMTP ya abierta."""
         try:
-            file = open(csv_file, 'r', encoding='utf-8')
-            sample = file.read(1024)
-            file.seek(0)
-            dialect = csv.Sniffer().sniff(sample)
-            encoding_used = 'utf-8'
-        except UnicodeDecodeError:
-            file = open(csv_file, 'r', encoding='latin-1')
-            sample = file.read(1024)
-            file.seek(0)
-            dialect = csv.Sniffer().sniff(sample)
-            encoding_used = 'latin-1'
-
-        reader = csv.DictReader(file, dialect=dialect)
-        fieldnames = reader.fieldnames
-        rows = list(reader)
-        file.close()
-
-        if campaign_col not in fieldnames:
-            fieldnames.append(campaign_col)
-            fieldnames.append(f"fecha_{campaign_col}")
-
-        updated = False
-        for row in rows:
-            # Buscamos la fila que contenga este email (aunque haya otros en la misma celda)
-            if target_email in row.get('Email', '').lower():
-                row[campaign_col] = 'si'
-                row[f"fecha_{campaign_col}"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                updated = True
-                break 
-
-        if updated:
-            with open(csv_file, 'w', encoding=encoding_used, newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=fieldnames, dialect=dialect)
-                writer.writeheader()
-                writer.writerows(rows)
-
-    def send_single_email(self, contact, subject, html_content, campaign_col, max_retries=2):
-        try:
-            # Estructura recomendada: multipart/related -> multipart/alternative (plain + html) + imágenes
             root = MIMEMultipart('related')
             alt = MIMEMultipart('alternative')
             root['From'] = f"Ángel Martínez <{self.sender_email}>"
             root['To'] = contact['email']
             root['Subject'] = subject
-            # List-Unsubscribe para mejorar entregabilidad
             root['List-Unsubscribe'] = '<mailto:angel.martinez.nq@gmail.com?subject=BAJA>'
 
             body = html_content.replace('{nombre}', contact['nombre'])
@@ -215,7 +201,6 @@ class EmailSender:
             else:
                 body_to_send = body
 
-            # Partes plain y html
             plain_part = MIMEText(self._html_to_text(body_to_send), 'plain', 'utf-8')
             html_part = MIMEText(body_to_send, 'html', 'utf-8')
 
@@ -223,38 +208,21 @@ class EmailSender:
             alt.attach(html_part)
             root.attach(alt)
 
-            # Adjuntar imágenes solo si no está desactivado
             if not self.disable_images:
                 self.attach_inline_images(root)
 
-            # --- RETRY LOGIC ---
-            for attempt in range(max_retries + 1):
-                try:
-                    with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
-                        server.starttls()
-                        server.login(self.sender_email, self.sender_password)
-                        server.sendmail(self.sender_email, contact['email'], root.as_string())
-                    
-                    print(f"✅ Enviado: {contact['email']} ({contact['nombre']})")
-                    self._log('sent', f"{contact['email']} | {contact['nombre']}")
-                    return True
-                
-                except (smtplib.SMTPServerDisconnected, smtplib.SMTPException, ConnectionError) as e:
-                    if attempt < max_retries:
-                        print(f"⚠️ Desconexión detectada en {contact['email']}. Reintentando ({attempt + 1}/{max_retries})...")
-                        self._log('retry', f"{contact['email']} | intento {attempt + 1}/{max_retries} | {e}")
-                        time.sleep(5)  # Esperar 5s antes de reintentar
-                    else:
-                        raise e
+            server.sendmail(self.sender_email, contact['email'], root.as_string())
             
+            print(f"✅ Enviado: {contact['email']} ({contact['nombre']})")
+            self._log('sent', f"{contact['email']} | {contact['nombre']}")
             return True
 
         except Exception as e:
-            print(f"❌ Error enviando a {contact['email']}: {e}")
+            print(f"❌ Fallo al enviar a {contact['email']}: {e}")
             self._log('error', f"{contact['email']} | {e}")
             return False
 
-    def launch_campaign(self, subject, html_file_path, config, campaign_col, daily_limit=450):
+    def launch_campaign(self, subject, html_file_path, config, campaign_id, daily_limit=450, csv_file='contactos.csv'):
         try:
             with open(html_file_path, 'r', encoding='utf-8') as f:
                 html_base = f.read()
@@ -262,46 +230,60 @@ class EmailSender:
             print(f"❌ Error: No se encuentra la plantilla HTML: {html_file_path}")
             return
 
-        contacts = self.load_pending_contacts(campaign_col=campaign_col)
+        print("🔍 Analizando contactos y filtrando enviados...")
+        contacts = self.load_pending_contacts(campaign_id=campaign_id, csv_file=csv_file)
         total = len(contacts)
-        print(f"🎯 Total de correos a enviar (incluyendo múltiples por farmacia): {total}")
+        
+        if total == 0:
+            print("🎉 ¡Campaña completada! No hay contactos pendientes.")
+            return
+
+        print(f"🎯 Total de correos PENDIENTES de enviar: {total}")
         print(f"🛡️ Límite diario de seguridad configurado en: {daily_limit}")
         
         emails_sent_today = 0
+        
+        # --- CONEXIÓN SMTP PERSISTENTE ---
+        try:
+            with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                server.starttls()
+                server.login(self.sender_email, self.sender_password)
+                print("🔌 Conexión SMTP establecida exitosamente.")
 
-        group_success = {}
+                for i, contact in enumerate(contacts, 1):
+                    # Chequeo de límites
+                    if emails_sent_today >= daily_limit:
+                        print(f"\n🛑 LÍMITE DIARIO DE {daily_limit} ALCANZADO.")
+                        break
 
-        for i, contact in enumerate(contacts, 1):
-            # --- PROTECCIÓN DIARIA ---
-            if emails_sent_today >= daily_limit:
-                print(f"\n🛑 LÍMITE DIARIO DE {daily_limit} ALCANZADO.")
-                print("El script se detendrá por seguridad para evitar bloqueo de Gmail.")
-                print("Puedes continuar mañana.")
-                break
+                    # Personalización hash
+                    current_html = html_base.replace("{random_hash}", str(random.getrandbits(128)))
+                    
+                    # Intentar envío
+                    try:
+                        success = self.send_single_email(server, contact, subject, current_html)
+                    except smtplib.SMTPServerDisconnected:
+                        print("⚠️ Conexión perdida. Reconectando...")
+                        server.connect(self.smtp_server, self.smtp_port)
+                        server.starttls()
+                        server.login(self.sender_email, self.sender_password)
+                        success = self.send_single_email(server, contact, subject, current_html)
 
-            current_html = html_base.replace("{random_hash}", str(random.getrandbits(128)))
-            
-            success = self.send_single_email(contact, subject, current_html, campaign_col)
-            
-            if success:
-                emails_sent_today += 1
-                group_success[contact['row_key']] = True
-            else:
-                group_success.setdefault(contact['row_key'], False)
+                    if success:
+                        emails_sent_today += 1
+                        self.mark_as_sent(campaign_id, contact['email'])
+                    
+                    # Lógica de espera
+                    if i < total and emails_sent_today < daily_limit:
+                        delay = random.randint(config['min_delay'], config['max_delay'])
+                        if i % config['batch_size'] == 0:
+                            print(f"⏸️ Pausa larga anti-bloqueo...")
+                            time.sleep(config['batch_delay'])
+                        else:
+                            print(f"⏳ Esperando {delay}s...")
+                            time.sleep(delay)
 
-            # Si es el último correo del grupo (misma fila), marcamos como enviado la fila
-            if contact.get('group_index') is not None and contact.get('group_total') is not None:
-                if contact['group_index'] == contact['group_total'] - 1:
-                    if group_success.get(contact['row_key'], False):
-                        # Marcamos la fila como enviada (usar cualquier email del grupo)
-                        self.mark_as_sent(contact['email'], campaign_col)
-
-            # Lógica de espera
-            if i < total and emails_sent_today < daily_limit:
-                delay = random.randint(config['min_delay'], config['max_delay'])
-                if i % config['batch_size'] == 0:
-                    print(f"⏸️ Pausa larga anti-bloqueo...")
-                    time.sleep(config['batch_delay'])
-                else:
-                    print(f"⏳ Esperando {delay}s...")
-                    time.sleep(delay)
+        except Exception as e:
+            print(f"❌ Error fatal en la conexión SMTP o loop principal: {e}")
+        finally:
+            print(f"\n✅ Resumen de sesión: {emails_sent_today} emails enviados hoy.")

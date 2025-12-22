@@ -22,19 +22,26 @@ MAX_DAILY_LIMIT = 450
 CAMPAIGN_ID = "c1" 
 SUBJECT = "⚕️ 4 Herramientas para optimizar tu farmacia"
 HTML_TEMPLATE = "templates/email_camp_1.html"
+CONTACTS_FILE = "contactos.csv" # <--- Updated back to production file
 
 if __name__ == "__main__":
     sender = EmailSender(SMTP_SERVER, SMTP_PORT, SENDER_EMAIL, SENDER_PASSWORD)
     
-    col_name = f"enviado_{CAMPAIGN_ID}"
-    
     print(f"🚀 Iniciando campaña: {CAMPAIGN_ID}")
     print(f"📂 Plantilla: {HTML_TEMPLATE}")
+    print(f"📋 Archivo contactos: {CONTACTS_FILE}")
+    
+    # Inyectamos el archivo de contactos en load_pending_contacts no está expuesto en launch_campaign
+    # así que necesitamos modificar launch_campaign o pasar el archivo.
+    # Espera, mi refactor de launch_campaign no aceptaba el archivo CSV como parámetro explícito 
+    # (usaba el default 'contactos.csv' en load_pending_contacts).
+    # Debo modificar launch_campaign para aceptar el archivo.
     
     sender.launch_campaign(
         SUBJECT, 
         HTML_TEMPLATE, 
         CONFIG, 
-        campaign_col=col_name,
-        daily_limit=MAX_DAILY_LIMIT  # <--- Pasamos el límite aquí
+        campaign_id=CAMPAIGN_ID, 
+        daily_limit=MAX_DAILY_LIMIT,
+        csv_file=CONTACTS_FILE # <--- Updating call
     )

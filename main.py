@@ -31,12 +31,6 @@ if __name__ == "__main__":
     print(f"📂 Plantilla: {HTML_TEMPLATE}")
     print(f"📋 Archivo contactos: {CONTACTS_FILE}")
     
-    # Inyectamos el archivo de contactos en load_pending_contacts no está expuesto en launch_campaign
-    # así que necesitamos modificar launch_campaign o pasar el archivo.
-    # Espera, mi refactor de launch_campaign no aceptaba el archivo CSV como parámetro explícito 
-    # (usaba el default 'contactos.csv' en load_pending_contacts).
-    # Debo modificar launch_campaign para aceptar el archivo.
-    
     sender.launch_campaign(
         SUBJECT, 
         HTML_TEMPLATE, 

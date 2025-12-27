@@ -17,7 +17,7 @@ class EmailSender:
         self.smtp_port = smtp_port
         self.sender_email = sender_email
         self.sender_password = sender_password
-        self.assets_dir = Path(__file__).resolve().parent / "IMAGENES"
+        self.assets_dir = Path(__file__).resolve().parent.parent / "IMAGENES"
         # Permite desactivar imágenes inline para minimizar señales de spam
         self.disable_images = os.getenv('DISABLE_IMAGES', 'false').strip().lower() in ('1', 'true', 'yes')
         self.logs_dir = Path("logs")

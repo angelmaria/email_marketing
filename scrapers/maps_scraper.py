@@ -1,6 +1,10 @@
 import time
 import csv
 import random
+import os
+import sys
+# Ensure project root is on sys.path so local shims (e.g., distutils) are importable
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys

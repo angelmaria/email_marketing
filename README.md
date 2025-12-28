@@ -38,6 +38,29 @@ Este proyecto automatiza el envío de campañas de email (orientado a farmacias)
 python main.py
 ```
 
+### Uso con uv (entornos gestionados)
+- Requiere `uv` instalado.
+- Este repo incluye `pyproject.toml` y `requirements.txt`.
+
+1) Instala dependencias con uv usando `requirements.txt` (sin empaquetar el repo):
+
+```bash
+uv pip install -r requirements.txt
+```
+
+2) Ejecuta el scraper de Google Maps:
+
+```bash
+uv run scrapers/maps_scraper.py
+```
+
+Si prefieres el intérprete del venv directamente:
+
+```bash
+. .venv/bin/activate
+python scrapers/maps_scraper.py
+```
+
 ## Formato de `contacts.csv`
 - Columnas mínimas esperadas: `Nombre`, `Email`.
 - La columna `Email` acepta múltiples direcciones separadas por `;`.
@@ -79,6 +102,9 @@ python main.py
 - Puedes usar `concatos.csv` (datos de prueba) para validaciones sin afectar a contactos reales.
 
 ## Solución de Problemas
+- Python 3.12 y `distutils`: si ves `ModuleNotFoundError: No module named 'distutils'`,
+  asegúrate de instalar dependencias con `uv pip install -r requirements.txt`.
+  Usamos versiones compatibles en `requirements.txt`.
 - "0 correos a enviar": revisa que `enviado_{CAMPAIGN_ID}` no sea `si` en las filas objetivo.
 - Encoding CSV: el cargador intenta `utf-8` y cae en `latin-1` si hace falta.
 - Imágenes no visibles en navegador: es normal con CID; verifica con un envío real.

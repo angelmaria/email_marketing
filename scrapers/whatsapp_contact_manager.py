@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 import sys
 
-FARMACIAS_FILE = 'farmacias_españa_whatsapp.csv'
+FARMACIAS_FILE = 'farmacias_madrid_completo.csv'
 LOGS_DIR = Path('logs_whatsapp')
 
 def cargar_farmacias():

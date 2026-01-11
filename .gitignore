@@ -8,3 +8,8 @@ Thumbs.db
 # Virtual environment
 .venv/
 
+# logs folders and files
+logs/
+*.log
+
+

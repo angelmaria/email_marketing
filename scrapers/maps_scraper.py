@@ -28,8 +28,8 @@ except ImportError as e:
     sys.exit(1)
 
 # --- CONFIGURACIÓN ---
-OUTPUT_FILE = 'farmacias_españa_whatsapp.csv'
-LOGS_DIR = Path('logs_whatsapp')
+OUTPUT_FILE = 'farmacias_madrid_completo.csv'
+LOGS_DIR = Path('logs_madrid_scraping')
 LOGS_DIR.mkdir(exist_ok=True)
 
 # Provincias españolas con códigos postales
@@ -46,16 +46,16 @@ PROVINCIAS_CODIGOS = {
     'Murcia': list(range(30000, 30050)),
 }
 
-# MODO PRUEBA: Solo Madrid y primeros 3 CPs
-MODO_PRUEBA = True
+# MODO COMPLETO MADRID: Todos los CPs de Madrid (28001-28055)
+MODO_PRUEBA = False
 PROVINCIAS_A_SCRAPEAR = ['Madrid']
 
 if MODO_PRUEBA:
     print("⚠️  MODO PRUEBA: Solo Madrid (primeros 3 CPs)")
     PROVINCIAS_CODIGOS['Madrid'] = list(range(28001, 28004))  # 28001, 28002, 28003
 else:
-    print("🚀 MODO COMPLETO: Todas las provincias")
-    PROVINCIAS_A_SCRAPEAR = list(PROVINCIAS_CODIGOS.keys())[:3]  # Primeras 3
+    print("🚀 MODO COMPLETO MADRID: Todos los códigos postales (28001-28055)")
+    # Ya está configurado correctamente en PROVINCIAS_CODIGOS
 
 # --- FUNCIONES ---
 
@@ -328,10 +328,11 @@ def scrape_google_maps():
 
 if __name__ == "__main__":
     print("\n" + "="*70)
-    print("🚀 GOOGLE MAPS SCRAPER - FARMACIAS ESPAÑA")
+    print("🚀 GOOGLE MAPS SCRAPER - FARMACIAS MADRID COMPLETO")
     print("="*70)
     print(f"Fecha: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Modo: {'PRUEBA (Madrid x3 CPs)' if MODO_PRUEBA else 'PRODUCCIÓN'}")
+    print(f"Modo: {'PRUEBA (Madrid x3 CPs)' if MODO_PRUEBA else 'COMPLETO (Madrid - todos los CPs)'}")
+    print(f"CPs a procesar: {len(PROVINCIAS_CODIGOS['Madrid'])}")
     print("="*70)
     
     try:

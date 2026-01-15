@@ -1,3 +1,42 @@
-selenium>=4.16.0
-undetected-chromedriver>=3.5.5
-packaging>=23.2
+# ============================================================================
+# REQUIREMENTS.TXT GLOBAL - Email Marketing Projects
+# ============================================================================
+# Uso: pip install -r requirements.txt
+# Entorno virtual: python -m venv .venv && .venv\Scripts\activate
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# CORE - Procesamiento de datos
+# ----------------------------------------------------------------------------
+pandas>=2.3.3
+numpy>=1.26.0
+openpyxl>=3.1.5              # Excel read/write
+
+# ----------------------------------------------------------------------------
+# EMAIL & SMTP
+# ----------------------------------------------------------------------------
+python-dotenv>=1.0.0         # Variables de entorno (.env)
+# smtplib es built-in de Python (no requiere instalación)
+
+# ----------------------------------------------------------------------------
+# WEB SCRAPING (Proyecto 2: WhatsApp Scraper)
+# ----------------------------------------------------------------------------
+selenium>=4.17.0             # Automatización de navegador
+webdriver-manager>=4.0.1     # Gestión automática de drivers
+beautifulsoup4>=4.12.3       # HTML parsing
+requests>=2.31.0             # HTTP requests
+undetected-chromedriver>=3.5.5  # Anti-detección (opcional)
+packaging>=23.2              # Gestión de versiones
+
+# ----------------------------------------------------------------------------
+# VISUALIZACIÓN (Proyecto 3: HF Campaigns)
+# ----------------------------------------------------------------------------
+matplotlib>=3.9.0            # Gráficos base
+seaborn>=0.13.2              # Gráficos estadísticos
+
+# ----------------------------------------------------------------------------
+# OPCIONAL - Development Tools
+# ----------------------------------------------------------------------------
+# pytest>=7.4.0              # Testing
+# black>=23.0.0              # Code formatting
+# flake8>=6.1.0              # Linting

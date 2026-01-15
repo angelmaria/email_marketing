@@ -1,0 +1,116 @@
+# ============================================================================
+# .gitignore - Healthfinder Email Campaign
+# ============================================================================
+# Este archivo excluye archivos sensibles y temporales de Git.
+# IMPORTANTE: .env NUNCA debe ser commiteado (contiene credenciales)
+# ============================================================================
+
+# ============================================================================
+# CREDENCIALES Y SECRETOS
+# ============================================================================
+
+# Variables de entorno (contiene SMTP_PASSWORD, etc.)
+.env
+.env.local
+.env.*.local
+.env.*.txt
+
+# Archivos de configuración sensibles
+config_local.py
+secrets.json
+credentials.json
+*.key
+*.pem
+
+# ============================================================================
+# DATOS SENSIBLES - INFORMACIÓN PERSONAL DE FARMACIAS
+# ============================================================================
+
+# CSVs con emails y teléfonos de farmacias (datos personales)
+data/tracking/emails_sent.csv
+data/tracking/bounces.csv
+data/tracking/opens.csv
+data/tracking/clicks.csv
+data/*.csv
+
+# Archivos de salida (pueden contener datos personales)
+output/
+output/**/*.xlsx
+output/**/*.xls
+output/**/*.csv
+output/lista_llamadas_priorizada.xlsx
+output/reportes/
+output/graficos/
+
+# Logs (pueden contener emails o información personal)
+logs/
+logs/**/*.log
+*.log
+
+# ============================================================================
+# PYTHON Y DEPENDENCIAS
+# ============================================================================
+
+# Entorno virtual (usar .venv global, no local)
+venv/
+.venv/
+env/
+ENV/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Instalaciones locales
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================================================
+# IDE Y EDITORES
+# ============================================================================
+
+.vscode/
+.vscode/*
+*.code-workspace
+
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ============================================================================
+# SISTEMA OPERATIVO
+# ============================================================================
+
+# Windows
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+.directory
+
+# ============================================================================
+# ARCHIVOS TEMPORALES
+# ============================================================================
+
+*.tmp
+*.temp
+*.bak
+*.backup
+~$*.xlsx

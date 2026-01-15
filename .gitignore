@@ -1,15 +1,53 @@
-*.csv
-.env
+# ============================================================================
+# .GITIGNORE - Email Marketing Projects
+# ============================================================================
+
+# Environment & Credentials
+.env                                # Credenciales locales (NUNCA commitear)
+.env.local
+.env.*.local
+
+# Python
 __pycache__/
-logs/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+
+# Virtual Environment
+.venv/
+.venv_backup/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Output Files (Sensibles: contienen información de campañas)
+output/                             # Gráficos, Excel con contactos
+logs/                               # Logs de campañas (con datos personales)
+*.log
+
+# Data & Tracking
+data/tracking/                      # CSVs con emails enviados, bounces
+*.csv
+*.xlsx
+*.xls
+
+# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Virtual environment
-.venv/
-
-# logs folders and files
-logs/
-*.log
+# Project-specific
+.cache/
+*.egg-info/
+dist/
+build/
 
 
